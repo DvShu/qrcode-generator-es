@@ -261,7 +261,8 @@ function getRsBlockTable(typeNumber: number, errorCorrectionLevel: number) {
 			return undefined;
 	}
 }
-export default class QRRSBlock {
+
+class QRRSBlock {
 	public totalCount: number;
 	public dataCount: number;
 	public constructor(totalCount: number, dataCount: number) {
@@ -269,7 +270,7 @@ export default class QRRSBlock {
 		this.dataCount = dataCount;
 	}
 
-	getRSBlocks(typeNumber: number, errorCorrectionLevel: number) {
+	static getRSBlocks(typeNumber: number, errorCorrectionLevel: number) {
 		const rsBlock = getRsBlockTable(typeNumber, errorCorrectionLevel);
 
 		if (typeof rsBlock === "undefined") {
@@ -293,3 +294,5 @@ export default class QRRSBlock {
 		return list;
 	}
 }
+
+export default QRRSBlock;

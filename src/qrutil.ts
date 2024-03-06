@@ -185,105 +185,138 @@ export function getLengthInBits(mode: number, type: number) {
 export function getLostPoint(qrcode: QRCode) {
 	const moduleCount = qrcode.getModuleCount();
 
-      let lostPoint = 0;
+	let lostPoint = 0;
 
-      // LEVEL1
+	// LEVEL1
 
-      for (let row = 0; row < moduleCount; row += 1) {
-        for (let col = 0; col < moduleCount; col += 1) {
+	for (let row = 0; row < moduleCount; row += 1) {
+		for (let col = 0; col < moduleCount; col += 1) {
+			let sameCount = 0;
+			const dark = qrcode.isDark(row, col);
 
-          let sameCount = 0;
-          const dark = qrcode.isDark(row, col);
+			for (let r = -1; r <= 1; r += 1) {
+				if (row + r < 0 || moduleCount <= row + r) {
+					continue;
+				}
 
-          for (let r = -1; r <= 1; r += 1) {
+				for (let c = -1; c <= 1; c += 1) {
+					if (col + c < 0 || moduleCount <= col + c) {
+						continue;
+					}
 
-            if (row + r < 0 || moduleCount <= row + r) {
-              continue;
-            }
+					if (r === 0 && c === 0) {
+						continue;
+					}
 
-            for (let c = -1; c <= 1; c += 1) {
+					if (dark === qrcode.isDark(row + r, col + c)) {
+						sameCount += 1;
+					}
+				}
+			}
 
-              if (col + c < 0 || moduleCount <= col + c) {
-                continue;
-              }
+			if (sameCount > 5) {
+				lostPoint += 3 + sameCount - 5;
+			}
+		}
+	}
 
-              if (r === 0 && c === 0) {
-                continue;
-              }
+	// LEVEL2
 
-              if (dark === qrcode.isDark(row + r, col + c) ) {
-                sameCount += 1;
-              }
-            }
-          }
+	for (let row = 0; row < moduleCount - 1; row += 1) {
+		for (let col = 0; col < moduleCount - 1; col += 1) {
+			let count = 0;
+			if (qrcode.isDark(row, col)) count += 1;
+			if (qrcode.isDark(row + 1, col)) count += 1;
+			if (qrcode.isDark(row, col + 1)) count += 1;
+			if (qrcode.isDark(row + 1, col + 1)) count += 1;
+			if (count === 0 || count === 4) {
+				lostPoint += 3;
+			}
+		}
+	}
 
-          if (sameCount > 5) {
-            lostPoint += (3 + sameCount - 5);
-          }
-        }
-      };
+	// LEVEL3
 
-      // LEVEL2
+	for (let row = 0; row < moduleCount; row += 1) {
+		for (let col = 0; col < moduleCount - 6; col += 1) {
+			if (
+				qrcode.isDark(row, col) &&
+				!qrcode.isDark(row, col + 1) &&
+				qrcode.isDark(row, col + 2) &&
+				qrcode.isDark(row, col + 3) &&
+				qrcode.isDark(row, col + 4) &&
+				!qrcode.isDark(row, col + 5) &&
+				qrcode.isDark(row, col + 6)
+			) {
+				lostPoint += 40;
+			}
+		}
+	}
 
-      for (let row = 0; row < moduleCount - 1; row += 1) {
-        for (let col = 0; col < moduleCount - 1; col += 1) {
-          let count = 0;
-          if (qrcode.isDark(row, col) ) count += 1;
-          if (qrcode.isDark(row + 1, col) ) count += 1;
-          if (qrcode.isDark(row, col + 1) ) count += 1;
-          if (qrcode.isDark(row + 1, col + 1) ) count += 1;
-          if (count === 0 || count === 4) {
-            lostPoint += 3;
-          }
-        }
-      }
+	for (let col = 0; col < moduleCount; col += 1) {
+		for (let row = 0; row < moduleCount - 6; row += 1) {
+			if (
+				qrcode.isDark(row, col) &&
+				!qrcode.isDark(row + 1, col) &&
+				qrcode.isDark(row + 2, col) &&
+				qrcode.isDark(row + 3, col) &&
+				qrcode.isDark(row + 4, col) &&
+				!qrcode.isDark(row + 5, col) &&
+				qrcode.isDark(row + 6, col)
+			) {
+				lostPoint += 40;
+			}
+		}
+	}
 
-      // LEVEL3
+	// LEVEL4
 
-      for (let row = 0; row < moduleCount; row += 1) {
-        for (let col = 0; col < moduleCount - 6; col += 1) {
-          if (qrcode.isDark(row, col)
-              && !qrcode.isDark(row, col + 1)
-              &&  qrcode.isDark(row, col + 2)
-              &&  qrcode.isDark(row, col + 3)
-              &&  qrcode.isDark(row, col + 4)
-              && !qrcode.isDark(row, col + 5)
-              &&  qrcode.isDark(row, col + 6) ) {
-            lostPoint += 40;
-          }
-        }
-      }
+	let darkCount = 0;
 
-      for (let col = 0; col < moduleCount; col += 1) {
-        for (let row = 0; row < moduleCount - 6; row += 1) {
-          if (qrcode.isDark(row, col)
-              && !qrcode.isDark(row + 1, col)
-              &&  qrcode.isDark(row + 2, col)
-              &&  qrcode.isDark(row + 3, col)
-              &&  qrcode.isDark(row + 4, col)
-              && !qrcode.isDark(row + 5, col)
-              &&  qrcode.isDark(row + 6, col) ) {
-            lostPoint += 40;
-          }
-        }
-      }
+	for (let col = 0; col < moduleCount; col += 1) {
+		for (let row = 0; row < moduleCount; row += 1) {
+			if (qrcode.isDark(row, col)) {
+				darkCount += 1;
+			}
+		}
+	}
 
-      // LEVEL4
+	const ratio =
+		Math.abs((100 * darkCount) / moduleCount / moduleCount - 50) / 5;
+	lostPoint += ratio * 10;
 
-      let darkCount = 0;
+	return lostPoint;
+}
 
-      for (let col = 0; col < moduleCount; col += 1) {
-        for (let row = 0; row < moduleCount; row += 1) {
-          if (qrcode.isDark(row, col) ) {
-            darkCount += 1;
-          }
-        }
-      }
-
-      const ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
-      lostPoint += ratio * 10;
-
-      return lostPoint;
-    };
-
+export function stringToBytesFuncsUtf8(data: string) {
+	const utf8 = [];
+	for (let i = 0; i < data.length; i++) {
+		let charcode = data.charCodeAt(i);
+		if (charcode < 0x80) utf8.push(charcode);
+		else if (charcode < 0x800) {
+			utf8.push(0xc0 | (charcode >> 6), 0x80 | (charcode & 0x3f));
+		} else if (charcode < 0xd800 || charcode >= 0xe000) {
+			utf8.push(
+				0xe0 | (charcode >> 12),
+				0x80 | ((charcode >> 6) & 0x3f),
+				0x80 | (charcode & 0x3f),
+			);
+		}
+		// surrogate pair
+		else {
+			i++;
+			// UTF-16 encodes 0x10000-0x10FFFF by
+			// subtracting 0x10000 and splitting the
+			// 20 bits of 0x0-0xFFFFF into two halves
+			charcode =
+				0x10000 + (((charcode & 0x3ff) << 10) | (data.charCodeAt(i) & 0x3ff));
+			utf8.push(
+				0xf0 | (charcode >> 18),
+				0x80 | ((charcode >> 12) & 0x3f),
+				0x80 | ((charcode >> 6) & 0x3f),
+				0x80 | (charcode & 0x3f),
+			);
+		}
+	}
+	return utf8;
 }

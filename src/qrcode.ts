@@ -1,4 +1,5 @@
 import BitBuffer from "./bit_buffer";
+import BitByte from "./bit_byte";
 import { QRErrorCorrectionLevelMap } from "./constants";
 import QrNumber from "./qr_number";
 import QrPolynomial from "./qr_polynomial";
@@ -9,6 +10,7 @@ import {
 	getErrorCorrectPolynomial,
 	getLengthInBits,
 	getLostPoint,
+	getMaskFunction,
 	getPatternPosition,
 } from "./qrutil";
 import type { ErrorCorrectionLevel, TypeNumber } from "./types";
@@ -36,6 +38,103 @@ export class QRCode {
 		this._moduleCount = this.typeNumber * 4 + 17;
 	}
 
+	public addData(data: string, mode?: string) {
+		// biome-ignore lint: reason
+		mode = mode || "Byte";
+
+		let newData: any = null;
+
+		switch (mode) {
+			case "Numeric":
+				newData = new QrNumber("0000");
+				break;
+			case "Alphanumeric":
+				// newData = qrAlphaNum(data);
+				newData = new BitByte(data);
+				break;
+			case "Byte":
+				newData = new BitByte(data);
+				break;
+			case "Kanji":
+				// newData = qrKanji(data);
+				newData = new BitByte(data);
+				break;
+			default:
+				throw `mode:${mode}`;
+		}
+
+		this._dataList.push(newData);
+		this._dataCache = null;
+	}
+
+	public isDark(row: number, col: number) {
+		if (
+			row < 0 ||
+			this._moduleCount <= row ||
+			col < 0 ||
+			this._moduleCount <= col
+		) {
+			throw `${row},${col}`;
+		}
+		return this._modules[row][col];
+	}
+
+	public getModuleCount() {
+		return this._moduleCount;
+	}
+
+	public make() {
+		if (this.typeNumber < 1) {
+			let typeNumber = 1;
+
+			for (; typeNumber < 40; typeNumber++) {
+				const rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.level);
+				const buffer = new BitBuffer();
+
+				for (let i = 0; i < this._dataList.length; i++) {
+					const data = this._dataList[i];
+					buffer.put(data.getMode(), 4);
+					buffer.put(
+						data.getLength(),
+						getLengthInBits(data.getMode(), typeNumber),
+					);
+					data.write(buffer);
+				}
+
+				let totalDataCount = 0;
+				for (let i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				if (buffer.getLengthInBits() <= totalDataCount * 8) {
+					break;
+				}
+			}
+
+			this.typeNumber = typeNumber as any;
+		}
+
+		this._makeImpl(false, this._getBestMaskPattern());
+	}
+
+	private _getBestMaskPattern() {
+		let minLostPoint = 0;
+		let pattern = 0;
+
+		for (let i = 0; i < 8; i += 1) {
+			this._makeImpl(true, i);
+
+			const lostPoint = getLostPoint(this);
+
+			if (i === 0 || minLostPoint > lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+
+		return pattern;
+	}
+
 	private _makeImpl(test: boolean, maskPattern: number) {
 		this._moduleCount = this.typeNumber * 4 + 17;
 		this._modules = this._makeModules(this._moduleCount);
@@ -56,6 +155,53 @@ export class QRCode {
 				this.level,
 				this._dataList,
 			);
+		}
+		this._mapData(this._dataCache, maskPattern);
+	}
+
+	private _mapData(data: number[], maskPattern: number) {
+		let inc = -1;
+		let row = this._moduleCount - 1;
+		let bitIndex = 7;
+		let byteIndex = 0;
+		const maskFunc = getMaskFunction(maskPattern);
+
+		for (let col = this._moduleCount - 1; col > 0; col -= 2) {
+			if (col === 6) col -= 1;
+
+			while (true) {
+				for (let c = 0; c < 2; c += 1) {
+					if (this._modules[row][col - c] == null) {
+						let dark = false;
+
+						if (byteIndex < data.length) {
+							dark = ((data[byteIndex] >>> bitIndex) & 1) === 1;
+						}
+
+						const mask = maskFunc(row, col - c);
+
+						if (mask) {
+							dark = !dark;
+						}
+
+						this._modules[row][col - c] = dark;
+						bitIndex -= 1;
+
+						if (bitIndex === -1) {
+							byteIndex += 1;
+							bitIndex = 7;
+						}
+					}
+				}
+
+				row += inc;
+
+				if (row < 0 || this._moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
 		}
 	}
 
@@ -119,24 +265,6 @@ export class QRCode {
 				}
 			}
 		}
-	}
-
-	private _getBestMaskPattern() {
-		let minLostPoint = 0;
-		let pattern = 0;
-
-		for (let i = 0; i < 8; i += 1) {
-			this._makeImpl(true, i);
-
-			const lostPoint = getLostPoint(this);
-
-			if (i === 0 || minLostPoint > lostPoint) {
-				minLostPoint = lostPoint;
-				pattern = i;
-			}
-		}
-
-		return pattern;
 	}
 
 	private _setupTimingPattern() {

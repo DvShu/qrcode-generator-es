@@ -1,9 +1,9 @@
 import { QRMode } from "./constants";
 
 export default class QrNumber {
-	private _data: any;
+	private _data: string;
 	private _mode: number;
-	public constructor(data: any) {
+	public constructor(data: string) {
 		this._data = data;
 		this._mode = QRMode.MODE_NUMBER;
 	}

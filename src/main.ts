@@ -1,8 +1,17 @@
-import { QRCodeRender, renderToSvg, renderToTable } from "./index";
+import {
+  QRCodeRender,
+  renderToSvg,
+  renderToTable,
+  renderToCanvas,
+} from "./index";
 
 const $table = document.getElementById("table");
 const qrcode = new QRCodeRender({
-	renderFn: renderToSvg,
-	text: "Hello World!!!",
+  renderFn: renderToCanvas,
+  text: "Hello World!!!",
+  el: "#canvas",
 });
-document.body.appendChild(qrcode.render());
+qrcode.render();
+// document.getElementById("div").innerHTML = qrcode.render();
+// console.log(qrcode.render());
+// document.body.appendChild(qrcode.render());

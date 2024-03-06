@@ -3,137 +3,193 @@ import type { ErrorCorrectionLevel, TypeNumber } from "./types";
 
 /** 二维码渲染的配置项 */
 interface QRCodeRenderOption {
-	/** 生成的二维码大小 */
-	size?: number;
-	/** 生成的二维码的外边距 */
-	margin?: number;
-	/** 二维码渲染的节点 */
-	el?: HTMLElement | null;
-	/** 二维码内容 */
-	text?: string;
-	/** 二维码纠错等级, L(默认)、M、Q、H */
-	level?: ErrorCorrectionLevel;
-	typeNumber?: TypeNumber;
-	/** 渲染函数 */
-	renderFn: (qrcode: QRCode, option: QRCodeRenderOption) => HTMLElement;
+  /** 生成的二维码大小 */
+  size?: number;
+  /** 生成的二维码的外边距 */
+  margin?: number;
+  /** 二维码渲染的节点 */
+  el?: HTMLElement | null | string;
+  /** 二维码内容 */
+  text?: string | null;
+  /** 二维码纠错等级, L(默认)、M、Q、H */
+  level?: ErrorCorrectionLevel;
+  /** 0~40, 默认: 0(自动计算) */
+  typeNumber?: TypeNumber;
+  /** 渲染函数 */
+  renderFn: (qrcode: QRCode, option: RequiredOption) => HTMLElement;
+  /** 二维码填充颜色 */
+  fill?: string;
 }
 
-function getDefaultOption(option: QRCodeRenderOption): QRCodeRenderOption {
-	return {
-		size: 100,
-		margin: 0,
-		typeNumber: 0,
-		level: "L",
-		...(option || {}),
-	};
+type RequiredOption = Required<QRCodeRenderOption>;
+
+function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
+  return {
+    size: 100,
+    margin: 0,
+    typeNumber: 0,
+    level: "L",
+    el: null,
+    text: null,
+    fill: "#000000",
+    ...(option || {}),
+  };
 }
 
-function createElement(el?: HTMLElement | null, tagName = "table") {
-	if (el == null) {
-		// biome-ignore lint: reason
-		el = document.createElement(tagName);
-	}
-	if (el.tagName !== tagName.toUpperCase()) {
-		throw new Error("output and tag are mismatch");
-	}
-	return el;
+function createElement(
+  el?: HTMLElement | null | string,
+  tagName = "table",
+  namespace: string | null = null
+) {
+  if (el == null) {
+    if (namespace == null) {
+      // biome-ignore lint: reason
+      el = document.createElement(tagName);
+    } else {
+      // biome-ignore lint: reason
+      el = document.createElementNS(namespace, tagName) as HTMLElement;
+    }
+  } else if (typeof el === "string") {
+    // biome-ignore lint: reason
+    el = document.querySelector<HTMLElement>(el);
+  }
+  if (el == null) {
+    throw new Error("el error");
+  }
+  if (el.tagName.toUpperCase() !== tagName.toUpperCase()) {
+    throw new Error("output and tag are mismatch");
+  }
+  return el;
+}
+
+function calculateCellsize(size: number, margin: number, moduleCount: number) {
+  const cellSize = Math.floor((size - margin * 2) / moduleCount);
+  const adjustSize = moduleCount * cellSize + margin * 2;
+  return [cellSize, adjustSize];
 }
 
 /** 渲染二维码到表格 */
 export function renderToTable(
-	qrcode: QRCode,
-	option: QRCodeRenderOption,
+  qrcode: QRCode,
+  option: RequiredOption
 ): HTMLTableElement {
-	const $el = createElement(option.el, "table");
-	option.el = $el;
-	const itemSize = Math.floor(
-		(option.size as number) / qrcode.getModuleCount(),
-	);
-	$el.style.cssText = `border-width:0px;border-style:none;border-collapse:collapse;padding:0px;margin:${option.margin}px;`;
-	let qrHtml = "<tbody>";
-	for (let r = 0; r < qrcode.getModuleCount(); r += 1) {
-		qrHtml += "<tr>";
+  const $el = createElement(option.el, "table");
+  option.el = $el;
+  const margin = option.margin;
+  const moduleCount = qrcode.getModuleCount();
+  const calcSize = calculateCellsize(option.size, margin, moduleCount);
 
-		for (let c = 0; c < qrcode.getModuleCount(); c += 1) {
-			qrHtml += '<td style="';
-			qrHtml += "border-width:0px;border-style:none;";
-			qrHtml += "border-collapse:collapse;";
-			qrHtml += "padding:0px;margin:0px;";
-			qrHtml += `width:${itemSize}px;`;
-			qrHtml += `height:${itemSize}px;`;
-			qrHtml += "background-color: ";
-			qrHtml += qrcode.isDark(r, c) ? "#000000" : "#ffffff";
-			qrHtml += ";";
-			qrHtml += '"/>';
-		}
-		qrHtml += "</tr>";
-	}
+  $el.style.cssText = `border-width:0px;border-style:none;border-collapse:collapse;padding:0px;margin:${margin}px;`;
+  let qrHtml = "<tbody>";
+  for (let r = 0; r < moduleCount; r += 1) {
+    qrHtml += "<tr>";
 
-	qrHtml += "</tbody>";
-	$el.innerHTML = qrHtml;
-	return $el as HTMLTableElement;
+    for (let c = 0; c < moduleCount; c += 1) {
+      qrHtml += '<td style="';
+      qrHtml += "border-width:0px;border-style:none;";
+      qrHtml += "border-collapse:collapse;";
+      qrHtml += "padding:0px;margin:0px;";
+      qrHtml += `width:${calcSize[0]}px;`;
+      qrHtml += `height:${calcSize[0]}px;`;
+      qrHtml += "background-color: ";
+      qrHtml += qrcode.isDark(r, c) ? option.fill : "#ffffff";
+      qrHtml += ";";
+      qrHtml += '"/>';
+    }
+    qrHtml += "</tr>";
+  }
+
+  qrHtml += "</tbody>";
+  $el.innerHTML = qrHtml;
+  return $el as HTMLTableElement;
 }
 
-export function renderToSvg(qrcode: QRCode, option: QRCodeRenderOption) {
-	const $el = createElement(option.el, "svg");
-	option.el = $el;
+export function renderToSvg(qrcode: QRCode, option: RequiredOption) {
+  const $el = createElement(option.el, "svg", "http://www.w3.org/2000/svg");
+  option.el = $el;
 
-	const rectStr = `l${option.size},0 0,${option.size} -${option.size},0 0,-${option.size}z `;
+  let size = option.size;
+  const margin = option.margin;
+  const moduleCount = qrcode.getModuleCount();
 
-	let svtStr = "";
-	svtStr += "";
-	svtStr += '<path d="';
+  const adjustSize = calculateCellsize(size, margin, moduleCount);
+  size = adjustSize[1];
 
-	for (let r = 0; r < qrcode.getModuleCount(); r += 1) {
-		const mr = r * (option.size as number) + (option.margin as number);
-		for (let c = 0; c < qrcode.getModuleCount(); c += 1) {
-			if (qrcode.isDark(r, c)) {
-				const mc = c * (option.size as number) + (option.margin as number);
-				svtStr += `M${mc},${mr}${rectStr}`;
-			}
-		}
-	}
-	svtStr += '" stroke="transparent" fill="black"/>';
+  const rect = `l${adjustSize[0]},0 0,${adjustSize[0]} -${adjustSize[0]},0 0,-${adjustSize[0]}z `;
 
-	$el.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-	$el.setAttribute("width", `${option.size}px`);
-	$el.setAttribute("height", `${option.size}px`);
-	$el.setAttribute("viewBox", `0 0 ${option.size} ${option.size}`);
-	$el.setAttribute("preserveAspectRatio", "xMinYMin meet");
-	$el.setAttribute("role", "img");
-	$el.innerHTML = svtStr;
-	return $el;
+  let svgStr = "";
+  svgStr += '<path d="';
+
+  for (let r = 0; r < qrcode.getModuleCount(); r += 1) {
+    const mr = r * adjustSize[0] + margin;
+    for (let c = 0; c < qrcode.getModuleCount(); c += 1) {
+      if (qrcode.isDark(r, c)) {
+        const mc = c * adjustSize[0] + margin;
+        svgStr += `M${mc},${mr}${rect}`;
+      }
+    }
+  }
+  svgStr += `" stroke="transparent" fill="${option.fill}"/>`;
+
+  $el.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  $el.setAttribute("width", `${size}px`);
+  $el.setAttribute("height", `${size}px`);
+  $el.setAttribute("viewBox", `0 0 ${size} ${size}`);
+  $el.setAttribute("preserveAspectRatio", "xMinYMin meet");
+  $el.setAttribute("role", "img");
+  $el.innerHTML = svgStr;
+  return $el;
+}
+
+export function renderToCanvas(qrcode: QRCode, option: RequiredOption) {
+  const $el = createElement(option.el, "canvas") as HTMLCanvasElement;
+  option.el = $el;
+
+  const length = qrcode.getModuleCount();
+  const adjustSize = calculateCellsize(option.size, option.margin, length);
+  const cellSize = adjustSize[0];
+  const ctx = $el.getContext("2d") as CanvasRenderingContext2D;
+  $el.width = adjustSize[1];
+  $el.height = adjustSize[1];
+
+  for (let row = 0; row < length; row++) {
+    for (let col = 0; col < length; col++) {
+      ctx.fillStyle = qrcode.isDark(row, col) ? option.fill : "white";
+      ctx.fillRect(row * cellSize, col * cellSize, cellSize, cellSize);
+    }
+  }
+  return $el;
 }
 
 /** 二维码渲染 */
 export class QRCodeRender {
-	public option: QRCodeRenderOption;
-	public qrcode: QRCode;
+  public option: RequiredOption;
+  public qrcode: QRCode;
 
-	public constructor(option: QRCodeRenderOption) {
-		const opts = getDefaultOption(option);
-		this.option = opts;
-		this.qrcode = new QRCode(opts.typeNumber, opts.level);
-		if (opts.text != null) {
-			this.qrcode.addData(opts.text);
-			this.qrcode.make();
-		}
-	}
+  public constructor(option: QRCodeRenderOption) {
+    const opts = getDefaultOption(option);
+    this.option = opts;
+    this.qrcode = new QRCode(opts.typeNumber, opts.level);
+    if (opts.text != null) {
+      this.qrcode.addData(opts.text);
+      this.qrcode.make();
+    }
+  }
 
-	public render() {
-		return this.option.renderFn(this.qrcode, this.option);
-	}
+  public render() {
+    return this.option.renderFn(this.qrcode, this.option);
+  }
 
-	public addData(data: string) {
-		let text = this.option.text || "";
-		text = `${text}${data}`;
-		return this.resetData(text);
-	}
+  public addData(data: string) {
+    let text = this.option.text || "";
+    text = `${text}${data}`;
+    return this.resetData(text);
+  }
 
-	public resetData(data: string) {
-		this.option.text = data;
-		this.qrcode.resetData(data);
-		this.qrcode.make();
-		return this.render();
-	}
+  public resetData(data: string) {
+    this.option.text = data;
+    this.qrcode.resetData(data);
+    this.qrcode.make();
+    return this.render();
+  }
 }

@@ -1,6 +1,8 @@
-import { render } from "./index";
+import { QRCodeRender, renderToSvg, renderToTable } from "./index";
 
-document.body.appendChild(
-	render({ text: "Hello Wrold!!!" }) as HTMLTableElement,
-);
-console.log(render({ text: "Hello Wrold!!!" }));
+const $table = document.getElementById("table");
+const qrcode = new QRCodeRender({
+	renderFn: renderToSvg,
+	text: "Hello World!!!",
+});
+document.body.appendChild(qrcode.render());

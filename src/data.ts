@@ -1,22 +1,44 @@
 import { QRMode } from "./constants";
+import { stringToBytesFuncsUtf8 } from "./qrutil";
 
-export default class QrNumber {
-	private _data: string;
-	private _mode: number;
-	public constructor(data: string) {
+class Data {
+	protected _data: string;
+	protected _mode: number;
+
+	public constructor(data: any, mode: number = QRMode.MODE_8BIT_BYTE) {
 		this._data = data;
-		this._mode = QRMode.MODE_NUMBER;
+		this._mode = mode;
 	}
 
-	getMode() {
+	public getMode(): number {
 		return this._mode;
 	}
 
-	getLength() {
+	public getLength(): number {
 		return this._data.length;
 	}
 
-	write(buf: any) {
+	public write(_buffer: any) {}
+}
+
+export class BitByte extends Data {
+	public constructor(data: string) {
+		super(stringToBytesFuncsUtf8(data), QRMode.MODE_8BIT_BYTE);
+	}
+
+	public write(buffer: any) {
+		for (let i = 0; i < this._data.length; i += 1) {
+			buffer.put(this._data[i], 8);
+		}
+	}
+}
+
+export class QrNumber extends Data {
+	public constructor(data: string) {
+		super(data, QRMode.MODE_NUMBER);
+	}
+
+	public write(buf: any) {
 		const data = this._data;
 
 		let i = 0;

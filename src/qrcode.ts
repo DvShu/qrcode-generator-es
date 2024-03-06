@@ -1,7 +1,6 @@
 import BitBuffer from "./bit_buffer";
-import BitByte from "./bit_byte";
 import { QRErrorCorrectionLevelMap } from "./constants";
-import QrNumber from "./qr_number";
+import { BitByte, QrNumber } from "./data";
 import QrPolynomial from "./qr_polynomial";
 import QRRSBlock from "./qrrs_block";
 import {
@@ -67,6 +66,13 @@ export class QRCode {
 		this._dataCache = null;
 	}
 
+	public resetData(data: string, mode?: string) {
+		this.typeNumber = 0;
+		this._dataList = [];
+		this._dataCache = null;
+		this.addData(data, mode);
+	}
+
 	public isDark(row: number, col: number) {
 		if (
 			row < 0 ||
@@ -110,7 +116,6 @@ export class QRCode {
 					break;
 				}
 			}
-
 			this.typeNumber = typeNumber as any;
 		}
 
@@ -339,9 +344,7 @@ export class QRCode {
 		dataList: QrNumber[],
 	) {
 		const rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectionLevel);
-
 		const buffer = new BitBuffer();
-
 		for (let i = 0; i < dataList.length; i += 1) {
 			const data = dataList[i];
 			buffer.put(data.getMode(), 4);

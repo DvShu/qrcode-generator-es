@@ -13,15 +13,13 @@ interface QRCodeRenderOption {
   text?: string | null;
   /** 二维码纠错等级, L(默认)、M、Q、H */
   level?: ErrorCorrectionLevel;
-  /** 0~40, 默认: 0(自动计算) */
-  typeNumber?: TypeNumber;
   /** 渲染函数 */
   renderFn: (qrcode: QRCode, option: RequiredOption) => HTMLElement;
   /** 二维码填充颜色 */
   fill?: string;
 }
 
-type RequiredOption = Required<QRCodeRenderOption>;
+type RequiredOption = Required<QRCodeRenderOption & { typeNumber: TypeNumber }>;
 
 function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
   return {
@@ -32,7 +30,7 @@ function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
     el: null,
     text: null,
     fill: "#000000",
-    ...(option || {}),
+    ...option,
   };
 }
 
@@ -169,23 +167,26 @@ export class QRCodeRender {
   public constructor(option: QRCodeRenderOption) {
     const opts = getDefaultOption(option);
     this.option = opts;
-    this.qrcode = new QRCode(opts.typeNumber, opts.level);
+    this.qrcode = new QRCode(opts.level, opts.typeNumber);
     if (opts.text != null) {
       this.qrcode.addData(opts.text);
       this.qrcode.make();
     }
   }
 
+  /** 渲染二维码 */
   public render() {
     return this.option.renderFn(this.qrcode, this.option);
   }
 
+  /** 添加数据并渲染二维码 */
   public addData(data: string) {
     let text = this.option.text || "";
     text = `${text}${data}`;
     return this.resetData(text);
   }
 
+  /** 重置二维码 */
   public resetData(data: string) {
     this.option.text = data;
     this.qrcode.resetData(data);

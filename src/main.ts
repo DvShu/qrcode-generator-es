@@ -3,13 +3,15 @@ import {
   renderToSvg,
   renderToTable,
   renderToCanvas,
+  renderToImg,
 } from "./index";
 
 const $table = document.getElementById("table");
 const qrcode = new QRCodeRender({
-  renderFn: renderToCanvas,
+  renderFn: renderToImg,
   text: "Hello World!!!",
-  el: "#canvas",
+  el: "#img",
+  fill: "red",
 });
 qrcode.render();
 // document.getElementById("div").innerHTML = qrcode.render();

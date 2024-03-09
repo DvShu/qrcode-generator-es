@@ -19,7 +19,9 @@ interface QRCodeRenderOption {
   fill?: string;
 }
 
-type RequiredOption = Required<QRCodeRenderOption & { typeNumber: TypeNumber }>;
+export type RequiredOption = Required<
+  QRCodeRenderOption & { typeNumber: TypeNumber }
+>;
 
 function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
   return {
@@ -34,7 +36,7 @@ function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
   };
 }
 
-function createElement(
+export function createElement(
   el?: HTMLElement | null | string,
   tagName = "table",
   namespace: string | null = null
@@ -60,7 +62,18 @@ function createElement(
   return el;
 }
 
-function calculateCellsize(size: number, margin: number, moduleCount: number) {
+/**
+ * 计算每一块的尺寸
+ * @param size 二维码尺寸
+ * @param margin 外边距
+ * @param moduleCount 模块数量
+ * @returns [cellSize, adjustSize] cellSize - 每一块的尺寸, adjustSize - 调整后的尺寸
+ */
+export function calculateCellsize(
+  size: number,
+  margin: number,
+  moduleCount: number
+) {
   const cellSize = Math.floor((size - margin * 2) / moduleCount);
   const adjustSize = moduleCount * cellSize + margin * 2;
   return [cellSize, adjustSize];
@@ -156,6 +169,17 @@ export function renderToCanvas(qrcode: QRCode, option: RequiredOption) {
       ctx.fillRect(row * cellSize, col * cellSize, cellSize, cellSize);
     }
   }
+  return $el;
+}
+
+export function renderToImg(qrcode: QRCode, option: RequiredOption) {
+  const $el = createElement(option.el, "img") as HTMLImageElement;
+  let opts = { ...option, el: null };
+  const $canvas = renderToCanvas(qrcode, opts);
+  $el.style.width = `${$canvas.width}px`;
+  $el.style.height = `${$canvas.height}px`;
+  $el.src = $canvas.toDataURL("image/png");
+  option.el = $el;
   return $el;
 }
 

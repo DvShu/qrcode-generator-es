@@ -16,7 +16,7 @@ interface QRCodeRenderOption {
 	fill?: string;
 }
 
-type RequiredOption = Required<QRCodeRenderOption & { typeNumber: TypeNumber }>;
+export type RequiredOption = Required<QRCodeRenderOption & { typeNumber: TypeNumber }>;
 
 /** 0~40之间的数字 */
 export type TypeNumber = number;

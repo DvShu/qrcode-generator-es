@@ -1,36 +1,75 @@
 # qrcode-generator-es
 
-#### Description
-二维码生成模块
+## 介绍
 
-#### Software Architecture
-Software architecture description
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 的 ES 模式的二维码生成器，使用 typescript 重新编写，同时支持 `tree-shaking`。
 
-#### Installation
+## 安装
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+```shell
+npm install qrcode-generator-es --save
+```
 
-#### Instructions
+## 使用
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+```javascript
+import {
+  QRCodeRender,
+  renderToSvg,
+  renderToTable,
+  renderToCanvas,
+  renderToImg,
+} from "./index";
 
-#### Contribution
+const $canvas = document.getElementById("canvas");
+const qrcode = new QRCodeRender({
+  renderFn: renderToCanvas,
+  text: "Hello World!!!",
+  el: $canvas,
+});
+qrcode.render();
+```
 
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
+## 参数
+| 参数名 | 类型 | 默认值 | 说明 | 必填 |
+| ---- | ---- | ---- | ---- | ---- |
+| `text` | `string` | - | 二维码内容, 如果不传, 则需要手动调用 `addData` 函数 | 否 |
+| `size` | `number` | 100 | 生成的二维码大小(最终大小会根据这个值调整[<=`size`]) | 否 |
+| `margin` | `number` | 0 | 二维码外边距 | 否 |
+| `level` | `string` | `L` | 二维码纠错等级, `L` (默认)、`M`、`Q`、`H` | 否 |
+| `fill` | `string` | `#000000` | 二维码背景色 | 否 |
+| `el` | `HTMLElement`、`string` | - | 渲染的元素, 可以是 `canvas` 或者 `img` 元素, 或者 选择器 | 否 |
+| `renderFn` | `function` | - | 渲染函数 | 是 |
 
+> 渲染函数
+> 1. `renderToSvg`: 渲染到 `svg` 元素
+> 2. `renderToTable`: 渲染到 `table` 元素
+> 3. `renderToCanvas`: 渲染到 `canvas` 元素
+> 4. `renderToImg`: 渲染到 `img` 元素
 
-#### Gitee Feature
+## 添加二维码内容
+如果二维码内容初始化了后，后续会根据接口动态变化的时候，可以根据 `API` 手动调整
 
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+### 1. 添加二维码内容
+
+```javascript
+import {
+  QRCodeRender,
+  renderToCanvas
+} from "./index";
+
+const qrcode = new QRCodeRender({
+  renderFn: renderToCanvas,
+  text: "Hello",
+  el: '#canvas',
+});
+qrcode.render();
+
+qrcode.addData(' World')
+```
+### 重置二维码内容
+添加二维码内容调用的是 `addData` 函数，重置则调用 `resetData` 函数
+
+```javascript
+qrcode.resetData('new data')
+```

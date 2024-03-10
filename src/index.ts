@@ -155,7 +155,9 @@ export function renderToSvg(qrcode: QRCode, option: RequiredOption) {
 export function renderToCanvas(qrcode: QRCode, option: RequiredOption) {
   const $el = createElement(option.el, "canvas") as HTMLCanvasElement;
   option.el = $el;
-
+  if (option.size <= 0) {
+    option.size = $el.width;
+  }
   const length = qrcode.getModuleCount();
   const adjustSize = calculateCellsize(option.size, option.margin, length);
   const cellSize = adjustSize[0];

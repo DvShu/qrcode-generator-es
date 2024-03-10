@@ -73,3 +73,4 @@ qrcode.addData(' World')
 ```javascript
 qrcode.resetData('new data')
 ```
+> `addData` 和 `resetData` 函数不需要手动调用 `render` 函数，会自动调用

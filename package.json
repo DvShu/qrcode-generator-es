@@ -32,5 +32,6 @@
     "LICENSE",
     "README.md",
     "README.en.md"
-  ]
+  ],
+  "packageManager": "pnpm@9.7.1"
 }

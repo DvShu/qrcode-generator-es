@@ -1,12 +1,19 @@
-import { QRCode } from "./qrcode";
-import type { ErrorCorrectionLevel, TypeNumber } from "./types";
+import qrcodegen from "./qrcodegen";
+type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
+
+/** 图标配置 */
+interface IconOption {
+  /** 	图标大小 */
+  size?: number;
+  /** 图标地址 */
+  src: string;
+  image?: HTMLImageElement;
+}
 
 /** 二维码渲染的配置项 */
-interface QRCodeRenderOption {
+export interface QRCodeRenderOption {
   /** 生成的二维码大小 */
   size?: number;
-  /** 生成的二维码的外边距 */
-  margin?: number;
   /** 二维码渲染的节点 */
   el?: HTMLElement | null | string;
   /** 二维码内容 */
@@ -14,26 +21,71 @@ interface QRCodeRenderOption {
   /** 二维码纠错等级, L(默认)、M、Q、H */
   level?: ErrorCorrectionLevel;
   /** 渲染函数 */
-  renderFn: (qrcode: QRCode, option: RequiredOption) => HTMLElement;
+  renderFn: (qrcode: qrcodegen.QrCode, option: RequiredOption) => HTMLElement;
   /** 二维码填充颜色 */
   fill?: string;
+  /** 二维码背景色 */
+  background?: string;
+  /** 嵌入图片 */
+  icon?: IconOption;
 }
 
-export type RequiredOption = Required<
-  QRCodeRenderOption & { typeNumber: TypeNumber }
->;
+type RequiredOption = Required<Omit<QRCodeRenderOption, "icon">> &
+  Pick<QRCodeRenderOption, "icon">;
+
+type IconRequiredOption = Required<IconOption>;
 
 function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
   return {
     size: 100,
-    margin: 0,
-    typeNumber: 0,
-    level: "L",
+    level: "M",
     el: null,
     text: null,
     fill: "#000000",
+    background: "#ffffff",
+    icon: undefined,
     ...option,
   };
+}
+
+function getIconDefault(option: IconOption): IconRequiredOption {
+  return {
+    size: 40,
+    // biome-ignore lint: reason
+    image: null as any,
+    ...option,
+  };
+}
+
+function tableCellStyleString(size: number, background: string) {
+  const w = Math.floor(size * 100) / 100;
+  const styleObj = {
+    width: `${w}px`,
+    height: `${w}px`,
+    background,
+    "border-width": "0px",
+    "border-style": "none",
+    "border-collapse": "collapse",
+    padding: "0px",
+    margin: "0px",
+  };
+  let str = "";
+  for (const key in styleObj) {
+    str += `${key}:${styleObj[key as "width"]};`;
+  }
+  return str;
+}
+
+function createQrCode(text: string, level: ErrorCorrectionLevel) {
+  let ecc = qrcodegen.QrCode.Ecc.LOW;
+  if (level === "M") {
+    ecc = qrcodegen.QrCode.Ecc.MEDIUM;
+  } else if (level === "Q") {
+    ecc = qrcodegen.QrCode.Ecc.QUARTILE;
+  } else if (level === "H") {
+    ecc = qrcodegen.QrCode.Ecc.HIGH;
+  }
+  return qrcodegen.QrCode.encodeText(text, ecc);
 }
 
 export function createElement(
@@ -62,121 +114,118 @@ export function createElement(
   return el;
 }
 
-/**
- * 计算每一块的尺寸
- * @param size 二维码尺寸
- * @param margin 外边距
- * @param moduleCount 模块数量
- * @returns [cellSize, adjustSize] cellSize - 每一块的尺寸, adjustSize - 调整后的尺寸
- */
-export function calculateCellsize(
-  size: number,
-  margin: number,
-  moduleCount: number
+function loadImage(
+  option: RequiredOption,
+  complete: (option: RequiredOption) => void
 ) {
-  const cellSize = Math.floor((size - margin * 2) / moduleCount);
-  const adjustSize = moduleCount * cellSize + margin * 2;
-  return [cellSize, adjustSize];
+  if (option.icon != null) {
+    const img = new Image();
+    img.src = option.icon.src;
+    img.onload = () => {
+      (option.icon as IconOption).image = img;
+      complete(option);
+    };
+    img.onerror = () => {
+      complete(option);
+    };
+  } else {
+    complete(option);
+  }
 }
 
 /** 渲染二维码到表格 */
 export function renderToTable(
-  qrcode: QRCode,
+  qrcode: qrcodegen.QrCode,
   option: RequiredOption
 ): HTMLTableElement {
   const $el = createElement(option.el, "table");
   option.el = $el;
-  const margin = option.margin;
-  const moduleCount = qrcode.getModuleCount();
-  const calcSize = calculateCellsize(option.size, margin, moduleCount);
-
-  $el.style.cssText = `border-width:0px;border-style:none;border-collapse:collapse;padding:0px;margin:${margin}px;`;
+  const scale = option.size / qrcode.size;
+  $el.style.cssText =
+    "border-width:0px;border-style:none;border-collapse:collapse;padding:0px;";
   let qrHtml = "<tbody>";
-  for (let r = 0; r < moduleCount; r += 1) {
+  for (let r = 0; r < qrcode.size; r++) {
     qrHtml += "<tr>";
-
-    for (let c = 0; c < moduleCount; c += 1) {
-      qrHtml += '<td style="';
-      qrHtml += "border-width:0px;border-style:none;";
-      qrHtml += "border-collapse:collapse;";
-      qrHtml += "padding:0px;margin:0px;";
-      qrHtml += `width:${calcSize[0]}px;`;
-      qrHtml += `height:${calcSize[0]}px;`;
-      qrHtml += "background-color: ";
-      qrHtml += qrcode.isDark(r, c) ? option.fill : "#ffffff";
-      qrHtml += ";";
-      qrHtml += '"/>';
+    for (let c = 0; c < qrcode.size; c++) {
+      const fill = qrcode.getModule(c, r) ? option.fill : option.background;
+      const styleStr = tableCellStyleString(scale, fill);
+      qrHtml += `<td style="${styleStr}"/>`;
     }
     qrHtml += "</tr>";
   }
-
   qrHtml += "</tbody>";
   $el.innerHTML = qrHtml;
   return $el as HTMLTableElement;
 }
 
-export function renderToSvg(qrcode: QRCode, option: RequiredOption) {
+export function renderToSvg(qrcode: qrcodegen.QrCode, option: RequiredOption) {
   const $el = createElement(option.el, "svg", "http://www.w3.org/2000/svg");
   option.el = $el;
 
-  let size = option.size;
-  const margin = option.margin;
-  const moduleCount = qrcode.getModuleCount();
+  const size = option.size;
+  const numCells = qrcode.size;
 
-  const adjustSize = calculateCellsize(size, margin, moduleCount);
-  size = adjustSize[1];
-
-  const rect = `l${adjustSize[0]},0 0,${adjustSize[0]} -${adjustSize[0]},0 0,-${adjustSize[0]}z `;
-
-  let svgStr = "";
-  svgStr += '<path d="';
-
-  for (let r = 0; r < qrcode.getModuleCount(); r += 1) {
-    const mr = r * adjustSize[0] + margin;
-    for (let c = 0; c < qrcode.getModuleCount(); c += 1) {
-      if (qrcode.isDark(r, c)) {
-        const mc = c * adjustSize[0] + margin;
-        svgStr += `M${mc},${mr}${rect}`;
-      }
+  const parts: Array<string> = [];
+  for (let y = 0; y < numCells; y++) {
+    for (let x = 0; x < numCells; x++) {
+      if (qrcode.getModule(x, y)) parts.push(`M${x},${y}h1v1h-1z`);
     }
   }
-  svgStr += `" stroke="transparent" fill="${option.fill}"/>`;
 
   $el.setAttribute("xmlns", "http://www.w3.org/2000/svg");
   $el.setAttribute("width", `${size}px`);
   $el.setAttribute("height", `${size}px`);
-  $el.setAttribute("viewBox", `0 0 ${size} ${size}`);
+  $el.setAttribute("viewBox", `0 0 ${numCells} ${numCells}`);
   $el.setAttribute("preserveAspectRatio", "xMinYMin meet");
   $el.setAttribute("role", "img");
-  $el.innerHTML = svgStr;
+  const partsHtml = [
+    `<rect width="100%" height="100%" fill="${option.background}"/>`,
+    `<path d="${parts.join(" ")}" fill="${option.fill}"/>`,
+  ];
+  if (option.icon != null) {
+    const iconOpt = getIconDefault(option.icon);
+    const scale = numCells / size;
+    const iconSize = Math.floor(Math.min(iconOpt.size, size * 0.3) * scale);
+    const point = numCells / 2 - iconSize / 2;
+    partsHtml.push(
+      `<image href="${iconOpt.src}" width="${iconSize}" height="${iconSize}" x="${point}" y="${point}" preserveAspectRatio="none"></image>`
+    );
+  }
+  $el.innerHTML = partsHtml.join("");
   return $el;
 }
 
-export function renderToCanvas(qrcode: QRCode, option: RequiredOption) {
-  const $el = createElement(option.el, "canvas") as HTMLCanvasElement;
-  option.el = $el;
-  if (option.size <= 0) {
-    option.size = $el.width;
-  }
-  const length = qrcode.getModuleCount();
-  const adjustSize = calculateCellsize(option.size, option.margin, length);
-  const cellSize = adjustSize[0];
-  const ctx = $el.getContext("2d") as CanvasRenderingContext2D;
-  $el.width = adjustSize[1];
-  $el.height = adjustSize[1];
-
-  for (let row = 0; row < length; row++) {
-    for (let col = 0; col < length; col++) {
-      ctx.fillStyle = qrcode.isDark(row, col) ? option.fill : "white";
-      ctx.fillRect(row * cellSize, col * cellSize, cellSize, cellSize);
+export function renderToCanvas(qr: qrcodegen.QrCode, option: RequiredOption) {
+  const canvas = createElement(option.el, "canvas") as HTMLCanvasElement;
+  loadImage(option, (opts) => {
+    const scale = opts.size / qr.size;
+    canvas.width = opts.size;
+    canvas.height = opts.size;
+    const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let y = 0; y < qr.size; y++) {
+      for (let x = 0; x < qr.size; x++) {
+        ctx.fillStyle = qr.getModule(x, y) ? opts.fill : opts.background;
+        const startX = Math.floor(x * scale);
+        const ceilScale = Math.ceil(scale);
+        const startY = Math.floor(y * scale);
+        ctx.fillRect(startX, startY, ceilScale, ceilScale);
+      }
     }
-  }
-  return $el;
+    if (opts.icon != null && opts.icon.image != null) {
+      const iconOpt = getIconDefault(opts.icon);
+      const iconSize = Math.floor(Math.min(iconOpt.size, opts.size * 0.3));
+      const point = opts.size / 2 - iconSize / 2;
+      ctx.drawImage(opts.icon.image, point, point, iconSize, iconSize);
+    }
+  });
+
+  return canvas;
 }
 
-export function renderToImg(qrcode: QRCode, option: RequiredOption) {
+export function renderToImg(qrcode: qrcodegen.QrCode, option: RequiredOption) {
   const $el = createElement(option.el, "img") as HTMLImageElement;
-  let opts = { ...option, el: null };
+  const opts = { ...option, el: null };
   const $canvas = renderToCanvas(qrcode, opts);
   $el.style.width = `${$canvas.width}px`;
   $el.style.height = `${$canvas.height}px`;
@@ -188,16 +237,12 @@ export function renderToImg(qrcode: QRCode, option: RequiredOption) {
 /** 二维码渲染 */
 export class QRCodeRender {
   public option: RequiredOption;
-  public qrcode: QRCode;
+  public qrcode: qrcodegen.QrCode;
 
   public constructor(option: QRCodeRenderOption) {
     const opts = getDefaultOption(option);
     this.option = opts;
-    this.qrcode = new QRCode(opts.level, opts.typeNumber);
-    if (opts.text != null) {
-      this.qrcode.addData(opts.text);
-      this.qrcode.make();
-    }
+    this.qrcode = createQrCode(opts.text || "", opts.level);
   }
 
   /** 渲染二维码 */
@@ -215,8 +260,7 @@ export class QRCodeRender {
   /** 重置二维码 */
   public resetData(data: string) {
     this.option.text = data;
-    this.qrcode.resetData(data);
-    this.qrcode.make();
+    this.qrcode = createQrCode(data, this.option.level);
     return this.render();
   }
 }

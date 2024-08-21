@@ -4,13 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <style>
+      .ml-10 {
+        margin-left: 10px;
+      }
+      .mt-10 {
+        margin-top: 10px;
+      }
+    </style>
   </head>
   <body>
-    <table id="table"></table>
-    <div id="div"></div>
     <canvas id="canvas"></canvas>
-    <hr />
-    <img id="img" />
+    <img id="img" class="ml-10" />
+    <svg id="svg" class="ml-10"></svg>
+    <table id="table" class="mt-10"></table>
+    <table id="table1" class="mt-10"></table>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

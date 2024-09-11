@@ -1,4 +1,4 @@
-import qrcodegen from "./qrcodegen";
+import qrcodegen from "./qrcodegen.js";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 
 /** 图标配置 */

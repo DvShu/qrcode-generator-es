@@ -86,14 +86,11 @@ export function createElement(
 ) {
   if (el == null) {
     if (namespace == null) {
-      // biome-ignore lint: reason
       el = document.createElement(tagName);
     } else {
-      // biome-ignore lint: reason
       el = document.createElementNS(namespace, tagName) as HTMLElement;
     }
   } else if (typeof el === "string") {
-    // biome-ignore lint: reason
     el = document.querySelector<HTMLElement>(el);
   }
   if (el == null) {
@@ -278,5 +275,12 @@ export class QRCodeRender {
   public resetData(data: string) {
     this.option.text = data;
     return this.render();
+  }
+
+  public destroy() {
+    this.option.el = null;
+    this.option.icon = undefined;
+    this.option.renderFn = undefined as any;
+    this.option = {} as any;
   }
 }

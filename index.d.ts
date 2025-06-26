@@ -50,5 +50,6 @@ export declare class QRCodeRender {
     addData(data: string): HTMLElement;
     /** 重置二维码 */
     resetData(data: string): HTMLElement;
+    destroy(): void;
 }
 export {};

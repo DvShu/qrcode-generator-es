@@ -40,19 +40,6 @@ type RequiredOption = Required<Omit<QRCodeRenderOption, "icon">> &
 
 type IconRequiredOption = Required<IconOption>;
 
-function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
-  return {
-    size: 100,
-    level: "M",
-    el: null,
-    text: null,
-    fill: "#000000",
-    background: "#ffffff",
-    icon: undefined,
-    ...option,
-  };
-}
-
 function getIconDefault(option: IconOption): IconRequiredOption {
   return {
     size: 40,
@@ -241,9 +228,18 @@ export function renderToImg(qrcode: qrcodegen.QrCode, option: RequiredOption) {
 /** 二维码渲染 */
 export class QRCodeRender {
   public option: RequiredOption;
+  private _defaultOption = {
+    size: 100,
+    level: "M",
+    el: null,
+    text: null,
+    fill: "#000000",
+    background: "#ffffff",
+    icon: undefined,
+  };
 
   public constructor(option: QRCodeRenderOption) {
-    this.option = getDefaultOption(option);
+    this.option = { ...this._defaultOption, ...option } as any;
   }
 
   /** 渲染二维码 */
@@ -255,8 +251,20 @@ export class QRCodeRender {
     return this.option.renderFn(qrcode, this.option);
   }
 
+  /** 批量修改渲染配置 */
   public setOption(option: Partial<QRCodeRenderOption>) {
-    this.option = { ...this.option, ...option };
+    for (const key in option) {
+      this.set(key as keyof QRCodeRenderOption, option[key as "text"]);
+    }
+  }
+
+  /** 修改渲染配置项 */
+  public set<K extends keyof QRCodeRenderOption>(
+    key: K,
+    value: QRCodeRenderOption[K]
+  ): void {
+    const _v = value ? value : this._defaultOption[key as "text"];
+    this.option[key] = _v as never;
   }
 
   /** 添加数据并渲染二维码 */

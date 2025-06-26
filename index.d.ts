@@ -1,5 +1,6 @@
 import qrcodegen from "./qrcodegen.js";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
+type RenderFunction = (qrcode: qrcodegen.QrCode, option: RequiredOption) => HTMLElement;
 /** 图标配置 */
 interface IconOption {
     /** 	图标大小 */
@@ -19,7 +20,7 @@ export interface QRCodeRenderOption {
     /** 二维码纠错等级, L(默认)、M、Q、H */
     level?: ErrorCorrectionLevel;
     /** 渲染函数 */
-    renderFn: (qrcode: qrcodegen.QrCode, option: RequiredOption) => HTMLElement;
+    renderFn: RenderFunction;
     /** 二维码填充颜色 */
     fill?: string;
     /** 二维码背景色 */
@@ -37,10 +38,10 @@ export declare function renderToImg(qrcode: qrcodegen.QrCode, option: RequiredOp
 /** 二维码渲染 */
 export declare class QRCodeRender {
     option: RequiredOption;
-    qrcode: qrcodegen.QrCode;
     constructor(option: QRCodeRenderOption);
     /** 渲染二维码 */
     render(): HTMLElement;
+    setOption(option: Partial<QRCodeRenderOption>): void;
     /** 添加数据并渲染二维码 */
     addData(data: string): HTMLElement;
     /** 重置二维码 */

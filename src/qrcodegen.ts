@@ -978,8 +978,7 @@ namespace qrcodegen {
     private static readonly NUMERIC_REGEX: RegExp = /^[0-9]*$/;
 
     // Describes precisely all strings that are encodable in alphanumeric mode.
-    private static readonly ALPHANUMERIC_REGEX: RegExp =
-      /^[A-Z0-9 $%*+.\/:-]*$/;
+    private static readonly ALPHANUMERIC_REGEX: RegExp = /^[A-Z0-9 $%*+./:-]*$/;
 
     // The set of all legal characters in alphanumeric mode,
     // where each character value maps to the index in the string.
@@ -989,7 +988,7 @@ namespace qrcodegen {
 }
 
 /*---- Public helper enumeration ----*/
-
+// eslint-disable-next-line
 namespace qrcodegen.QrCode {
   type int = number;
 
@@ -1016,7 +1015,7 @@ namespace qrcodegen.QrCode {
 }
 
 /*---- Public helper enumeration ----*/
-
+// eslint-disable-next-line
 namespace qrcodegen.QrSegment {
   type int = number;
 

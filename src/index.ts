@@ -1,6 +1,11 @@
 import qrcodegen from "./qrcodegen.js";
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 
+type RenderFunction = (
+  qrcode: qrcodegen.QrCode,
+  option: RequiredOption
+) => HTMLElement;
+
 /** 图标配置 */
 interface IconOption {
   /** 	图标大小 */
@@ -21,7 +26,7 @@ export interface QRCodeRenderOption {
   /** 二维码纠错等级, L(默认)、M、Q、H */
   level?: ErrorCorrectionLevel;
   /** 渲染函数 */
-  renderFn: (qrcode: qrcodegen.QrCode, option: RequiredOption) => HTMLElement;
+  renderFn: RenderFunction;
   /** 二维码填充颜色 */
   fill?: string;
   /** 二维码背景色 */
@@ -51,7 +56,6 @@ function getDefaultOption(option: QRCodeRenderOption): RequiredOption {
 function getIconDefault(option: IconOption): IconRequiredOption {
   return {
     size: 40,
-    // biome-ignore lint: reason
     image: null as any,
     ...option,
   };
@@ -237,17 +241,22 @@ export function renderToImg(qrcode: qrcodegen.QrCode, option: RequiredOption) {
 /** 二维码渲染 */
 export class QRCodeRender {
   public option: RequiredOption;
-  public qrcode: qrcodegen.QrCode;
 
   public constructor(option: QRCodeRenderOption) {
-    const opts = getDefaultOption(option);
-    this.option = opts;
-    this.qrcode = createQrCode(opts.text || "", opts.level);
+    this.option = getDefaultOption(option);
   }
 
   /** 渲染二维码 */
   public render() {
-    return this.option.renderFn(this.qrcode, this.option);
+    const qrcode: qrcodegen.QrCode = createQrCode(
+      this.option.text || "",
+      this.option.level
+    );
+    return this.option.renderFn(qrcode, this.option);
+  }
+
+  public setOption(option: Partial<QRCodeRenderOption>) {
+    this.option = { ...this.option, ...option };
   }
 
   /** 添加数据并渲染二维码 */
@@ -260,7 +269,6 @@ export class QRCodeRender {
   /** 重置二维码 */
   public resetData(data: string) {
     this.option.text = data;
-    this.qrcode = createQrCode(data, this.option.level);
     return this.render();
   }
 }

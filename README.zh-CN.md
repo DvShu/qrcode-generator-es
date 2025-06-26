@@ -1,5 +1,9 @@
 # qrcode-generator-es
 
+## 语言
+
+[English](README.md) | 中文
+
 ## 介绍
 
 基于 [qr-code-generator-library](https://www.nayuki.io/page/qr-code-generator-library) 的二维码生成器，支持 `tree-shaking`。

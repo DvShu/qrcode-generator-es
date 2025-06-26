@@ -1,16 +1,20 @@
 # qrcode-generator-es
 
-## 介绍
+## Language
 
-基于 [qr-code-generator-library](https://www.nayuki.io/page/qr-code-generator-library) 的二维码生成器，支持 `tree-shaking`。
+english | [中文](README.zh-CN.md) 
 
-## 安装
+## introduce
+
+A QR code generator based on the [Qr-code-generator-library](https://www.nayuki.io/page/qr-code-generator-library) that supports `tree-shaking`.
+
+## install
 
 ```shell
 npm install qrcode-generator-es --save
 ```
 
-## 使用
+## use
 
 ```javascript
 import {
@@ -30,28 +34,28 @@ const qrcode = new QRCodeRender({
 qrcode.render();
 ```
 
-## 参数
-| 参数名 | 类型 | 默认值 | 说明 | 必填 |
+## parameter
+| parameter name| type| default| explain| required|
 | ---- | ---- | ---- | ---- | ---- |
-| `text` | `string` | - | 二维码内容, 如果不传, 则需要手动调用 `addData` 函数 | 否 |
-| `size` | `number` | 100 | 生成的二维码大小 | 否 |
-| `level` | `string` | `L` | 二维码纠错等级, `L` (默认)、`M`、`Q`、`H` | 否 |
-| `fill` | `string` | `#000000` | 二维码填充色 | 否 |
-| `background` | `string` | `#ffffff` | 二维码背景色 | 否 |
-| `el` | `HTMLElement`、`string` | - | 渲染的元素, 可以是 `canvas` 或者 `img` 元素, 或者 选择器 | 否 |
-| `renderFn` | `function` | - | 渲染函数 | 是 |
-| `icon` | `{ src: string, size?: number }` | - | 二维码中间的图标 | 否 |
+| `text`|`string`| - | QR code content, if not passed, you need to manually call `addData` function | `N` |
+| `size` |`number`| 100 | Size of QR code generated | `N` |
+| `level` |`string`|`L`| 2D code error correction level, `L` (default), `M`, `Q`, `H` | `N` |
+| `fill` | `string` | `#000000` | 2D code fill color | `N` |
+| `background` | `string` | `#ffffff` | 2D code background color | `N` |
+| `el` |`HTMLElement`, `string`| - | The rendered element can be `canvas` or `img` element, or a selector | `N` |
+| `renderFn` | `function` | - | rendering function | `Y` |
+| `icon` | `{ src: string, size?: number }` | - | The icon in the middle of the QR code | `N` |
 
-> 渲染函数
-> 1. `renderToSvg`: 渲染到 `svg` 元素
-> 2. `renderToTable`: 渲染到 `table` 元素
-> 3. `renderToCanvas`: 渲染到 `canvas` 元素
-> 4. `renderToImg`: 渲染到 `img` 元素
+>rendering function
+> 1. `renderToSvg`: render to`svg` element
+> 2. `renderToTable`: render to`table` element
+> 3. `renderToCanvas`: render to`canvas` elements
+> 4. `renderToImg`: render to`img` element
 
-## 添加二维码内容
-如果二维码内容初始化了后，后续会根据接口动态变化的时候，可以根据 `API` 手动调整
+## Add QR code content
+If the content of the QR code is initialized, it will change dynamically according to the interface. You can manually adjust it according`API`
 
-### 1. 添加二维码内容
+### 1. Add QR code content
 
 ```javascript
 import {
@@ -68,10 +72,10 @@ qrcode.render();
 
 qrcode.addData(' World')
 ```
-### 重置二维码内容
-添加二维码内容调用的是 `addData` 函数，重置则调用 `resetData` 函数
+### Reset QR code content
+Add QR code content calls`addData` function, reset calls`resetData` function
 
 ```javascript
 qrcode.resetData('new data')
 ```
-> `addData` 和 `resetData` 函数不需要手动调用 `render` 函数，会自动调用
+>`addData`and`resetData` functions do not need to call`render` function manually, they are called automatically

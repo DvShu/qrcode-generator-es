@@ -12,12 +12,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/towardly/qrcode-generator-es.git"
+    "url": "https://github.com/DvShu/qrcode-generator-es.git"
   },
   "keywords": [
     "ts",
     "js",
-    "qrcode-generator"
+    "qrcode-generator",
+    "qrcode",
+    "es6"
   ],
   "author": "Tenny <tenny.shu@foxmail.com>",
   "license": "MulanPSL-2.0",

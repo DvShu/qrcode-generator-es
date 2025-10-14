@@ -1,10 +1,9 @@
-import qrcodegen from "./qrcodegen.js";
+import { QrCode } from "./qrcodegen.js";
+import { Ecc } from "./ecc.js";
+
 type ErrorCorrectionLevel = "L" | "M" | "Q" | "H";
 
-type RenderFunction = (
-  qrcode: qrcodegen.QrCode,
-  option: RequiredOption
-) => HTMLElement;
+type RenderFunction = (qrcode: QrCode, option: RequiredOption) => HTMLElement;
 
 /** 图标配置 */
 interface IconOption {
@@ -68,15 +67,15 @@ function tableCellStyleString(size: number, background: string) {
 }
 
 function createQrCode(text: string, level: ErrorCorrectionLevel) {
-  let ecc = qrcodegen.QrCode.Ecc.LOW;
+  let ecc = Ecc.LOW;
   if (level === "M") {
-    ecc = qrcodegen.QrCode.Ecc.MEDIUM;
+    ecc = Ecc.MEDIUM;
   } else if (level === "Q") {
-    ecc = qrcodegen.QrCode.Ecc.QUARTILE;
+    ecc = Ecc.QUARTILE;
   } else if (level === "H") {
-    ecc = qrcodegen.QrCode.Ecc.HIGH;
+    ecc = Ecc.HIGH;
   }
-  return qrcodegen.QrCode.encodeText(text, ecc);
+  return QrCode.encodeText(text, ecc);
 }
 
 export function createElement(
@@ -123,7 +122,7 @@ function loadImage(
 
 /** 渲染二维码到表格 */
 export function renderToTable(
-  qrcode: qrcodegen.QrCode,
+  qrcode: QrCode,
   option: RequiredOption
 ): HTMLTableElement {
   const $el = createElement(option.el, "table");
@@ -146,7 +145,7 @@ export function renderToTable(
   return $el as HTMLTableElement;
 }
 
-export function renderToSvg(qrcode: qrcodegen.QrCode, option: RequiredOption) {
+export function renderToSvg(qrcode: QrCode, option: RequiredOption) {
   const $el = createElement(option.el, "svg", "http://www.w3.org/2000/svg");
   option.el = $el;
 
@@ -183,7 +182,7 @@ export function renderToSvg(qrcode: qrcodegen.QrCode, option: RequiredOption) {
   return $el;
 }
 
-export function renderToCanvas(qr: qrcodegen.QrCode, option: RequiredOption) {
+export function renderToCanvas(qr: QrCode, option: RequiredOption) {
   const canvas = createElement(option.el, "canvas") as HTMLCanvasElement;
   loadImage(option, (opts) => {
     const scale = opts.size / qr.size;
@@ -211,7 +210,7 @@ export function renderToCanvas(qr: qrcodegen.QrCode, option: RequiredOption) {
   return canvas;
 }
 
-export function renderToImg(qrcode: qrcodegen.QrCode, option: RequiredOption) {
+export function renderToImg(qrcode: QrCode, option: RequiredOption) {
   const $el = createElement(option.el, "img") as HTMLImageElement;
   const opts = { ...option, el: null };
   const $canvas = renderToCanvas(qrcode, opts);
@@ -241,7 +240,7 @@ export class QRCodeRender {
 
   /** 渲染二维码 */
   public render() {
-    const qrcode: qrcodegen.QrCode = createQrCode(
+    const qrcode: QrCode = createQrCode(
       this.option.text || "",
       this.option.level
     );

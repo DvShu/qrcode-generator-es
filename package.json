@@ -1,14 +1,14 @@
 {
   "name": "qrcode-generator-es",
   "$schema": "https://json.schemastore.org/package.json",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "ES二维码生成模块",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc"
+    "build": "tsdown"
   },
   "repository": {
     "type": "git",
@@ -24,7 +24,9 @@
   "author": "Tenny <tenny.shu@foxmail.com>",
   "license": "MulanPSL-2.0",
   "devDependencies": {
-    "prettier": "^3.6.1",
+    "oxfmt": "^0.23.0",
+    "oxlint": "^1.38.0",
+    "tsdown": "0.19.0-beta.5",
     "typescript": "^5.8.3",
     "vite": "^7.0.0"
   },
